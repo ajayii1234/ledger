@@ -3,32 +3,34 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
 
-    <!-- Tailwind Play CDN -->
+    <!-- Tailwind via CDN (no Vite) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Optional: custom Tailwind config -->
+    <!-- Optional: customize tailwind config inline (example) -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#0ea5a4',
-                    },
-                },
-            },
+                    // add custom colors, spacing etc. here if needed
+                }
+            }
         }
     </script>
+
+    <!-- Place to add page-specific styles if needed -->
+    @stack('styles')
 </head>
 <body class="font-sans antialiased">
-
     <div class="min-h-screen bg-gray-100">
-        <!-- Navigation / you can keep Breeze nav or a simple include -->
+        <!-- Navigation -->
         @includeIf('layouts.navigation')
 
         {{-- If layout is used as a component (x-app-layout), $slot will be set.
@@ -52,5 +54,7 @@
         @endisset
     </div>
 
+    <!-- Place to add page-specific scripts -->
+    @stack('scripts')
 </body>
 </html>
