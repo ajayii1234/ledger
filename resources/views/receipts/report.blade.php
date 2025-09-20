@@ -39,7 +39,7 @@
     </div>
 
     <!-- Export CSV form (POST) -->
-    <div class="mb-4 flex justify-end">
+    <!-- <div class="mb-4 flex justify-end">
         <form action="{{ route('receipts.report.export') }}" method="POST" class="flex items-center space-x-2">
             @csrf
             <input type="hidden" name="date_from" value="{{ $dateFrom }}">
@@ -49,7 +49,7 @@
                 Export CSV
             </button>
         </form>
-    </div>
+    </div> -->
 
     <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         {{-- DataTables CSS (Tailwind integration) --}}
