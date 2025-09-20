@@ -147,33 +147,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize DataTables with Tailwind-friendly DOM layout
     if (document.getElementById('receipts-table')) {
-        $('#receipts-table').DataTable({
+        const table = $('#receipts-table').DataTable({
             pageLength: 10,
-            pagingType: 'simple_numbers',
-            order: [[1, 'desc']], // newest date first (date is now column index 1)
+            pagingType: 'simple', // Previous / Next only
+            order: [[1, 'desc']], // newest date first (date is column index 1)
             responsive: true,
-            // Provide columns so the first column can be rendered as the row number
             columns: [
-                {
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    className: 'dt-center',
-                    render: function (data, type, row, meta) {
-                        return meta.row + 1 + meta.settings._iDisplayStart;
-                    }
-                },
+                { orderable: false, searchable: false }, // No. (we fill this on draw)
                 null, // Date
                 null, // Vendor
                 null, // Category
                 null, // Amount
                 { orderable: false, searchable: false } // Actions
             ],
-            // Styling / layout: place length and search on the top bar and info/paging in footer
+            // DOM: place the pager to the right in the footer
             dom:
                 "<'flex items-center justify-between mb-3'<'text-sm'l><'flex-1 text-right'f>>" +
                 "t" +
-                "<'flex items-center justify-between mt-3'<'text-sm'i><'text-sm'p>>",
+                "<'flex items-center justify-between mt-3'<'text-sm'i><'flex justify-end'p>>",
             columnDefs: [
                 { targets: 4, className: 'dt-right' }, // Amount (index 4)
                 { targets: 5, orderable: false, searchable: false, className: 'dt-center' } // Actions (index 5)
@@ -183,13 +174,99 @@ document.addEventListener('DOMContentLoaded', function () {
                 searchPlaceholder: "Search receipts...",
                 lengthMenu: "_MENU_ rows",
                 paginate: {
-                    previous: "&laquo;",
-                    next: "&raquo;"
+                    previous: "Previous",
+                    next: "Next"
                 }
             },
-            // small tweak to keep rows compact
             createdRow: function (row, data, dataIndex) {
                 $(row).addClass('align-middle');
+            },
+            // --- numbering + convert prev/next to anchors on every draw ---
+            drawCallback: function (settings) {
+                const api = this.api();
+                const pageInfo = api.page.info();
+
+                // 1) Fill numbering column for current page (continuous across pages)
+                api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = (pageInfo.start + i + 1);
+                });
+
+                // 2) Find pager and convert Prev/Next to <a> with pointer cursor and click handlers
+                const pager = document.querySelector('#receipts-table_wrapper .dataTables_paginate');
+                if (!pager) return;
+
+                // Add spacing / alignment classes to container
+                pager.classList.add('items-center', 'space-x-2');
+
+                pager.querySelectorAll('.paginate_button').forEach(function (btnElem) {
+                    // detect button text
+                    const txt = (btnElem.textContent || '').trim().toLowerCase();
+
+                    // We only convert the Prev/Next controls here (leave numeric buttons alone)
+                    const isPrev = txt === 'previous' || txt === '«';
+                    const isNext = txt === 'next' || txt === '»';
+
+                    // common styling for pagination items
+                    const applyButtonStyles = function(el, disabled) {
+                        el.classList.add('inline-flex', 'items-center', 'px-3', 'py-1', 'border', 'rounded', 'text-sm', 'bg-white', 'hover:bg-gray-50', 'cursor-pointer');
+                        if (disabled) {
+                            el.classList.add('opacity-50');
+                        } else {
+                            el.classList.remove('opacity-50');
+                        }
+                    };
+
+                    // Only modify Prev/Next (text matches)
+                    if (isPrev || isNext) {
+                        // determine disabled state
+                        const disabled = btnElem.classList.contains('disabled') || btnElem.getAttribute('aria-disabled') === 'true';
+
+                        // If it's not already an <a>, replace it with one (preserve attrs & content)
+                        if (btnElem.tagName.toLowerCase() !== 'a') {
+                            const a = document.createElement('a');
+
+                            // copy attributes
+                            for (let i = 0; i < btnElem.attributes.length; i++) {
+                                const attr = btnElem.attributes[i];
+                                a.setAttribute(attr.name, attr.value);
+                            }
+
+                            // copy inner HTML/text
+                            a.innerHTML = btnElem.innerHTML;
+
+                            // ensure href exists so cursor appears as pointer
+                            if (!a.getAttribute('href')) a.setAttribute('href', '#');
+
+                            // replace element in DOM
+                            btnElem.parentNode.replaceChild(a, btnElem);
+                            btnElem = a; // now refer to the anchor
+                        } else {
+                            // ensure there's an href (sometimes DataTables outputs <a> without href)
+                            if (!btnElem.getAttribute('href')) btnElem.setAttribute('href', '#');
+                        }
+
+                        // style it
+                        applyButtonStyles(btnElem, disabled);
+
+                        // attach click handler that uses DataTables API
+                        // remove any inline onclick to avoid duplicates, then set a fresh one
+                        btnElem.onclick = function (e) {
+                            e.preventDefault();
+                            if (disabled) return; // do nothing if disabled
+                            if (isPrev) {
+                                api.page('previous').draw(false);
+                            } else if (isNext) {
+                                api.page('next').draw(false);
+                            }
+                        };
+                    } else {
+                        // numeric page buttons: just ensure they look like buttons and anchors have pointer
+                        // many numeric buttons are already anchors; if they are anchors ensure pointer and styling
+                        if (btnElem.tagName.toLowerCase() === 'a') {
+                            applyButtonStyles(btnElem, btnElem.classList.contains('disabled') || btnElem.getAttribute('aria-disabled') === 'true');
+                        }
+                    }
+                });
             }
         });
 
@@ -216,4 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
+
+
 @endsection

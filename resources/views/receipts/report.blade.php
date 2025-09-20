@@ -116,24 +116,16 @@
 document.addEventListener('DOMContentLoaded', function () {
     const $table = $('#report-table');
     if ($table.length) {
-        $table.DataTable({
+        const table = $table.DataTable({
             pageLength: 10,
-            pagingType: 'simple_numbers',
-            order: [[1, 'desc']], // month column is now index 1
+            pagingType: 'simple', // Previous / Next only
+            order: [[1, 'desc']], // month column is index 1
             responsive: true,
             dom:
                 "<'flex items-center justify-between mb-3'<'text-sm'l><'flex-1 text-right'f>>" +
                 "t" +
-                "<'flex items-center justify-between mt-3'<'text-sm'i><'text-sm'p>>",
+                "<'flex items-center justify-between mt-3'<'text-sm'i><'flex justify-end'p>>",
             columnDefs: [
-                {
-                    targets: 0,
-                    orderable: false,
-                    searchable: false,
-                    render: function (data, type, row, meta) {
-                        return meta.row + 1 + meta.settings._iDisplayStart;
-                    }
-                },
                 { targets: 1, type: 'num' }, // month
                 { targets: 3, className: 'dt-right', type: 'num' } // total
             ],
@@ -141,10 +133,78 @@ document.addEventListener('DOMContentLoaded', function () {
                 search: "",
                 searchPlaceholder: "Search month or category...",
                 lengthMenu: "_MENU_ rows",
-                paginate: { previous: "&laquo;", next: "&raquo;" }
+                paginate: { previous: "Previous", next: "Next" }
             },
             createdRow: function (row, data, dataIndex) {
                 $(row).addClass('align-middle');
+            },
+            // Fill numbering column and convert Prev/Next to <a> on every draw
+            drawCallback: function (settings) {
+                const api = this.api();
+                const pageInfo = api.page.info();
+
+                // 1) Fill numbering column (continuous across pages)
+                api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                    cell.innerHTML = (pageInfo.start + i + 1);
+                });
+
+                // 2) Convert Prev/Next to anchors and style pager
+                const pager = document.querySelector('#report-table_wrapper .dataTables_paginate');
+                if (!pager) return;
+
+                pager.classList.add('items-center', 'space-x-2');
+
+                pager.querySelectorAll('.paginate_button').forEach(function (btnElem) {
+                    const txt = (btnElem.textContent || '').trim().toLowerCase();
+                    const isPrev = txt === 'previous' || txt === '«';
+                    const isNext = txt === 'next' || txt === '»';
+
+                    const applyButtonStyles = function(el, disabled) {
+                        el.classList.add('inline-flex', 'items-center', 'px-3', 'py-1', 'border', 'rounded', 'text-sm', 'bg-white', 'hover:bg-gray-50', 'cursor-pointer');
+                        if (disabled) {
+                            el.classList.add('opacity-50');
+                        } else {
+                            el.classList.remove('opacity-50');
+                        }
+                    };
+
+                    if (isPrev || isNext) {
+                        const disabled = btnElem.classList.contains('disabled') || btnElem.getAttribute('aria-disabled') === 'true';
+
+                        // Replace non-anchors with <a>
+                        if (btnElem.tagName.toLowerCase() !== 'a') {
+                            const a = document.createElement('a');
+                            for (let i = 0; i < btnElem.attributes.length; i++) {
+                                const attr = btnElem.attributes[i];
+                                a.setAttribute(attr.name, attr.value);
+                            }
+                            a.innerHTML = btnElem.innerHTML;
+                            if (!a.getAttribute('href')) a.setAttribute('href', '#');
+                            btnElem.parentNode.replaceChild(a, btnElem);
+                            btnElem = a;
+                        } else {
+                            if (!btnElem.getAttribute('href')) btnElem.setAttribute('href', '#');
+                        }
+
+                        applyButtonStyles(btnElem, disabled);
+
+                        // fresh click handler using DataTables API
+                        btnElem.onclick = function (e) {
+                            e.preventDefault();
+                            if (disabled) return;
+                            if (isPrev) {
+                                api.page('previous').draw(false);
+                            } else if (isNext) {
+                                api.page('next').draw(false);
+                            }
+                        };
+                    } else {
+                        // numeric buttons: ensure anchors have pointer cursor and basic styling
+                        if (btnElem.tagName.toLowerCase() === 'a') {
+                            applyButtonStyles(btnElem, btnElem.classList.contains('disabled') || btnElem.getAttribute('aria-disabled') === 'true');
+                        }
+                    }
+                });
             }
         });
 
@@ -157,4 +217,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+
 @endsection

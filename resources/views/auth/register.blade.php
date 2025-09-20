@@ -1,4 +1,23 @@
 <x-guest-layout>
+    <div class="w-full max-w-md mx-auto text-center mb-6">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
+            Automatic Expense Tracker
+        </h1>
+
+        <p class="mt-2 text-sm text-gray-600 max-w-prose mx-auto">
+            Upload receipts as CSV files — the app auto-populates expense records for fast reconciliation and accurate stock price decimals.
+        </p>
+
+        <div class="mt-3 inline-flex items-center gap-2 justify-center">
+            <!-- <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-100">
+                In development
+            </span> -->
+            <span class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-800 border border-blue-100">
+                CSV upload · Auto-populate
+            </span>
+        </div>
+    </div>
+
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
