@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\OcrController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockPriceController;
 use Illuminate\Support\Facades\Route;
@@ -50,13 +51,14 @@ Route::put('stocks/{stock}', [StockController::class, 'update'])
     ->name('stocks.destroy');
     
 
+Route::get('/ocr', [OcrController::class, 'index'])->name('ocr.index');
+Route::post('/ocr/scan', [OcrController::class, 'scan'])->name('ocr.scan');
+Route::get('/ocr/results/{id}', [OcrController::class, 'show'])->name('ocr.show');
+
+
 });
 
 
    
-
-
-
-
 
 require __DIR__.'/auth.php';
