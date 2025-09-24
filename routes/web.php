@@ -58,7 +58,7 @@ Route::get('/ocr/results/{id}', [OcrController::class, 'show'])->name('ocr.show'
 
 });
 
-
+// It worked
    
 
 require __DIR__.'/auth.php';
