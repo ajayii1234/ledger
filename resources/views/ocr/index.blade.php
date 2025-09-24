@@ -7,7 +7,7 @@
 
     <form action="{{ route('ocr.scan') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
       @csrf
-
+<!-- nice -->
       <label class="block">
         <span class="text-sm font-medium text-gray-700">Upload product label image</span>
 
